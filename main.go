@@ -88,10 +88,10 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
 		}
 
 		// detect things in the image
-		//matches = detectThings(img)
-		matches = [][]rune{
-			[]rune{'穀', '気', '起', '希', '記', '徽', '嬉', '毀'},
-			[]rune{'物', '象', '床', '少', '性', '章', '笑', '請'},
+		matches, err = detectCharacters(imgPath)
+		if err != nil {
+			ui.MsgBoxError(w, strError, err.Error())
+			return
 		}
 
 		boxes := generateBoxes(matches)
