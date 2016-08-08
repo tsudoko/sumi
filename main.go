@@ -73,20 +73,6 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
 		}
 		defer os.Remove(imgPath)
 
-		f, err := os.Open(imgPath)
-		if err != nil {
-			ui.MsgBoxError(w, strError, err.Error())
-			return
-		}
-		defer f.Close()
-
-		//img, err := png.Decode(f)
-		_, err = png.Decode(f)
-		if err != nil {
-			ui.MsgBoxError(w, strError, err.Error())
-			return
-		}
-
 		// detect things in the image
 		matches, err = detectCharacters(imgPath)
 		if err != nil {
