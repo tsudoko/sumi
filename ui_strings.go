@@ -4,7 +4,7 @@ const (
 	strSelect = "セレクト"
 	strPrint  = "表示"
 
-    strDetecting_ = "Detecting..."
+	strDetecting_ = "Detecting..."
 
 	strError = "Error"
 
