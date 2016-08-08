@@ -79,7 +79,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
 		go func() {
 			matches, err = detectCharacters(imgPath)
 			ui.QueueMain(func() {
-				os.Remove(imgPath)
+				os.Remove(imgPath) // FIXME: the image doesn't get removed when you quit before detectCharacters() finishes
 				label.SetText("")
 				button.Enable()
 
