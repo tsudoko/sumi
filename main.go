@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/png"
 	"os"
 	"strconv"
 	"time"
@@ -62,34 +61,46 @@ func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 }
 
 func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
-	return func(*ui.Button) {
+	return func(button *ui.Button) {
 		var matches [][]rune
 
+		button.Disable()
 		imgPath, err := TakeScreenshot("sumi"+strconv.FormatInt(time.Now().UnixNano(), 10), "")
 
 		if err != nil {
 			ui.MsgBoxError(w, strError, err.Error())
 			return
 		}
-		defer os.Remove(imgPath)
 
-		// detect things in the image
-		matches, err = detectCharacters(imgPath)
-		if err != nil {
-			ui.MsgBoxError(w, strError, err.Error())
-			return
-		}
+		label := ui.NewLabel(strDetecting_)
 
-		boxes := generateBoxes(matches)
-		box := ui.NewHorizontalBox()
+		g.SetChild(label)
 
-		for i, e := range boxes {
-			box.Append(e.cbox, false)
-			e.cbox.OnSelected(cbModifyEntry(entry, i, e))
-			e.CallOnSelected = cbModifyEntry(entry, i, e)
-			e.CallOnSelected(e.cbox)
-		}
-		g.SetChild(box)
+		go func() {
+			matches, err = detectCharacters(imgPath)
+			ui.QueueMain(func() {
+				os.Remove(imgPath)
+				label.SetText("")
+				button.Enable()
+
+				if err != nil {
+					ui.MsgBoxError(w, strError, err.Error())
+					return
+				}
+
+				box := ui.NewHorizontalBox()
+				boxes := generateBoxes(matches)
+
+				for i, e := range boxes {
+					box.Append(e.cbox, false)
+					e.cbox.OnSelected(cbModifyEntry(entry, i, e))
+					e.CallOnSelected = cbModifyEntry(entry, i, e)
+					e.CallOnSelected(e.cbox)
+				}
+
+				g.SetChild(box)
+			})
+		}()
 	}
 }
 

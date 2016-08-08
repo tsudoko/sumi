@@ -4,6 +4,8 @@ const (
 	strSelect = "セレクト"
 	strPrint  = "表示"
 
+    strDetecting_ = "Detecting..."
+
 	strError = "Error"
 
 	strScreenshotExecNotFound = "Screenshot executable not found"
