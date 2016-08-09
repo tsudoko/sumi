@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
-	"strconv"
-	"time"
-)
 
-import "github.com/andlabs/ui"
+	"github.com/andlabs/ui"
+)
 
 type CboxFunc func(*ui.Combobox)
 
@@ -39,15 +38,8 @@ func generateBoxes(matches [][]rune) []*ValueCbox {
 	return boxes
 }
 
-// Removes a single file with a filename passed to toRemove.
-func cleanup(toRemove chan string) bool {
-	select {
-	case path := <-toRemove:
-		os.Remove(path)
-		return true
-	default:
-		return false
-	}
+func cleanup(path string) {
+	os.RemoveAll(path)
 }
 
 func cbPrintEntry(e *ui.Entry) func(*ui.Button) {
@@ -71,18 +63,17 @@ func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 	}
 }
 
-func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, toRemove chan string) func(*ui.Button) {
+func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) func(*ui.Button) {
 	return func(button *ui.Button) {
 		var matches [][]rune
 
 		button.Disable()
-		imgPath, err := TakeScreenshot("sumi"+strconv.FormatInt(time.Now().UnixNano(), 10), "")
+		imgPath, err := TakeScreenshot(tempDir+string(os.PathSeparator)+"sumi", "")
 
 		if err != nil {
 			ui.MsgBoxError(w, strError, err.Error())
 			return
 		}
-		toRemove <- imgPath
 
 		label := ui.NewLabel(strDetecting_)
 
@@ -91,7 +82,6 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, toRemove chan stri
 		go func() {
 			matches, err = detectCharacters(imgPath)
 			ui.QueueMain(func() {
-				cleanup(toRemove)
 				label.SetText("")
 				button.Enable()
 
@@ -128,14 +118,18 @@ func MainWindow() {
 	toolbar := ui.NewVerticalBox()
 
 	w := ui.NewWindow("すみ", 0, 0, false)
-	toRemove := make(chan string, 1)
+
+	tempDir, err := ioutil.TempDir("", "sumi")
+	if err != nil {
+		ui.MsgBoxError(w, strError, err.Error())
+	}
 
 	toolbar.Append(selectButton, false)
 	toolbar.Append(printButton, false)
 	otherbox.Append(resultEntry, false)
 	otherbox.Append(matchesGroup, false)
 	// do we really need dynamic box generation? most words are less than 3 chars long
-	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry, toRemove))
+	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry, tempDir))
 	printButton.OnClicked(cbPrintEntry(resultEntry))
 	resultEntry.SetReadOnly(true)
 
@@ -147,8 +141,7 @@ func MainWindow() {
 	w.SetChild(mainbox)
 	w.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
-		for cleanup(toRemove) {
-		}
+		cleanup(tempDir)
 		return true
 	})
 
