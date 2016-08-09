@@ -39,6 +39,17 @@ func generateBoxes(matches [][]rune) []*ValueCbox {
 	return boxes
 }
 
+// Removes a single file with a filename passed to toRemove.
+func cleanup(toRemove chan string) bool {
+	select {
+	case path := <-toRemove:
+		os.Remove(path)
+		return true
+	default:
+		return false
+	}
+}
+
 func cbPrintEntry(e *ui.Entry) func(*ui.Button) {
 	return func(*ui.Button) {
 		fmt.Println(e.Text())
@@ -60,7 +71,7 @@ func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 	}
 }
 
-func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
+func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, toRemove chan string) func(*ui.Button) {
 	return func(button *ui.Button) {
 		var matches [][]rune
 
@@ -71,6 +82,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
 			ui.MsgBoxError(w, strError, err.Error())
 			return
 		}
+		toRemove <- imgPath
 
 		label := ui.NewLabel(strDetecting_)
 
@@ -79,7 +91,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry) func(*ui.Button) {
 		go func() {
 			matches, err = detectCharacters(imgPath)
 			ui.QueueMain(func() {
-				os.Remove(imgPath) // FIXME: the image doesn't get removed when you quit before detectCharacters() finishes
+				cleanup(toRemove)
 				label.SetText("")
 				button.Enable()
 
@@ -116,13 +128,14 @@ func MainWindow() {
 	toolbar := ui.NewVerticalBox()
 
 	w := ui.NewWindow("すみ", 0, 0, false)
+	toRemove := make(chan string, 1)
 
 	toolbar.Append(selectButton, false)
 	toolbar.Append(printButton, false)
 	otherbox.Append(resultEntry, false)
 	otherbox.Append(matchesGroup, false)
 	// do we really need dynamic box generation? most words are less than 3 chars long
-	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry))
+	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry, toRemove))
 	printButton.OnClicked(cbPrintEntry(resultEntry))
 	resultEntry.SetReadOnly(true)
 
@@ -134,6 +147,8 @@ func MainWindow() {
 	w.SetChild(mainbox)
 	w.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
+		for cleanup(toRemove) {
+		}
 		return true
 	})
 
