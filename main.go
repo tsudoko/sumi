@@ -42,12 +42,6 @@ func cleanup(path string) {
 	os.RemoveAll(path)
 }
 
-func cbPrintEntry(e *ui.Entry) func(*ui.Button) {
-	return func(*ui.Button) {
-		fmt.Println(e.Text())
-	}
-}
-
 func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 	return func(*ui.Combobox) {
 		old := e.Text()
@@ -60,6 +54,7 @@ func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 		runes[i] = v.Selected()
 		new_ := string(runes)
 		e.SetText(new_)
+		fmt.Println(e.Text())
 	}
 }
 
@@ -109,7 +104,6 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 
 func MainWindow() {
 	selectButton := ui.NewButton(strSelect)
-	printButton := ui.NewButton(strPrint)
 	resultEntry := ui.NewEntry()
 
 	matchesGroup := ui.NewGroup("")
@@ -126,12 +120,10 @@ func MainWindow() {
 	}
 
 	toolbar.Append(selectButton, false)
-	toolbar.Append(printButton, false)
 	otherbox.Append(resultEntry, false)
 	otherbox.Append(matchesGroup, false)
 	// do we really need dynamic box generation? most words are less than 3 chars long
 	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry, tempDir))
-	printButton.OnClicked(cbPrintEntry(resultEntry))
 	resultEntry.SetReadOnly(true)
 
 	matchesGroup.SetMargined(false)
