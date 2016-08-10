@@ -66,11 +66,11 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 		imgPath, err := TakeScreenshot(tempDir+string(os.PathSeparator)+"sumi", "")
 
 		if err != nil {
-			ui.MsgBoxError(w, strError, err.Error())
+			ui.MsgBoxError(w, "Error", err.Error())
 			return
 		}
 
-		label := ui.NewLabel(strDetecting_)
+		label := ui.NewLabel("Detecting...")
 
 		g.SetChild(label)
 
@@ -81,7 +81,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 				button.Enable()
 
 				if err != nil {
-					ui.MsgBoxError(w, strError, err.Error())
+					ui.MsgBoxError(w, "Error", err.Error())
 					return
 				}
 
@@ -103,7 +103,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 }
 
 func MainWindow() {
-	selectButton := ui.NewButton(strSelect)
+	selectButton := ui.NewButton("セレクト")
 	resultEntry := ui.NewEntry()
 
 	matchesGroup := ui.NewGroup("")
@@ -116,7 +116,7 @@ func MainWindow() {
 
 	tempDir, err := ioutil.TempDir("", "sumi")
 	if err != nil {
-		ui.MsgBoxError(w, strError, err.Error())
+		ui.MsgBoxError(w, "Error", err.Error())
 	}
 
 	toolbar.Append(selectButton, false)
