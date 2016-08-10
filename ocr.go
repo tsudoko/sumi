@@ -31,11 +31,13 @@ func detectCharacters(path string) ([][]rune, error) {
 	t.SetImagePix(p)
 	t.Recognize()
 
-	ri := t.Iterator()
+	ri, err := t.Iterator()
+	if err != nil {
+		return [][]rune{}, err
+	}
 	level := tesseract.RIL_SYMBOL
 	var matches [][]rune
 
-	// if ri != 0
 	for {
 		if _, err = ri.Text(level); err != nil {
 			break
