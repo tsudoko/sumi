@@ -42,7 +42,7 @@ func TakeScreenshot(path, cmdName string) (string, error) {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		return "", errors.New(err.Error())
+		return "", err
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
