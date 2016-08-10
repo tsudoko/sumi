@@ -124,7 +124,9 @@ func MainWindow() {
 	otherbox.Append(matchesGroup, false)
 	// do we really need dynamic box generation? most words are less than 3 chars long
 	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry, tempDir))
-	resultEntry.SetReadOnly(true)
+	resultEntry.OnChanged(func(e *ui.Entry) {
+		fmt.Println(e.Text())
+	})
 
 	matchesGroup.SetMargined(false)
 
