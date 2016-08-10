@@ -93,6 +93,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 				box := ui.NewHorizontalBox()
 				boxes := generateBoxes(matches)
 
+				entry.SetText("")
 				for i, e := range boxes {
 					box.Append(e.cbox, false)
 					e.cbox.OnSelected(cbModifyEntry(entry, i, e))
