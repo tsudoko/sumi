@@ -91,7 +91,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 
 				entry.SetText("")
 				for i, e := range boxes {
-					box.Append(e.cbox, false)
+					box.Append(e.cbox, true)
 					e.cbox.OnSelected(cbModifyEntry(entry, i, e))
 					e.CallOnSelected = cbModifyEntry(entry, i, e)
 					e.CallOnSelected(e.cbox)
@@ -120,8 +120,8 @@ func MainWindow() {
 		ui.MsgBoxError(w, "Error", err.Error())
 	}
 
-	toolbar.Append(selectButton, false)
-	otherbox.Append(resultEntry, false)
+	toolbar.Append(selectButton, true)
+	otherbox.Append(resultEntry, true)
 	otherbox.Append(matchesGroup, false)
 	// do we really need dynamic box generation? most words are less than 3 chars long
 	selectButton.OnClicked(cbSelectArea(w, matchesGroup, resultEntry, tempDir))
@@ -132,7 +132,7 @@ func MainWindow() {
 	matchesGroup.SetMargined(false)
 
 	mainbox.Append(toolbar, false)
-	mainbox.Append(otherbox, false)
+	mainbox.Append(otherbox, true)
 
 	w.SetChild(mainbox)
 	w.OnClosing(func(*ui.Window) bool {
