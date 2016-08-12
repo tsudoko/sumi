@@ -8,8 +8,8 @@ import (
 )
 
 var (
-    ErrScreenshotCmdNotFound = errors.New("Screenshot executable not found")
-    ErrNoScreenshotUtilFound = errors.New("No suitable screenshot utility found")
+	ErrScreenshotCmdNotFound = errors.New("Screenshot executable not found")
+	ErrNoScreenshotUtilFound = errors.New("No suitable screenshot utility found")
 )
 
 func BinExists(bin string) bool {
