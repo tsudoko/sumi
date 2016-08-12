@@ -46,6 +46,7 @@ func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 	return func(*ui.Combobox) {
 		old := e.Text()
 		runes := []rune(old)
+		oldLen := len(runes)
 
 		for j := len(runes); i >= len(runes); j++ {
 			runes = append(runes, '　')
@@ -54,7 +55,10 @@ func cbModifyEntry(e *ui.Entry, i int, v *ValueCbox) func(*ui.Combobox) {
 		runes[i] = v.Selected()
 		new_ := string(runes)
 		e.SetText(new_)
-		fmt.Println(e.Text())
+
+		if i < oldLen {
+			fmt.Println(e.Text())
+		}
 	}
 }
 
@@ -97,6 +101,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 					e.CallOnSelected(e.cbox)
 				}
 
+				fmt.Println(entry.Text())
 				g.SetChild(box)
 			})
 		}()
