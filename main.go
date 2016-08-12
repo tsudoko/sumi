@@ -67,6 +67,7 @@ func cbSelectArea(w *ui.Window, g *ui.Group, entry *ui.Entry, tempDir string) fu
 
 		if err != nil {
 			ui.MsgBoxError(w, "Error", err.Error())
+			button.Enable()
 			return
 		}
 
