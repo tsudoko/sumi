@@ -126,8 +126,8 @@ func MainWindow() {
 
 	swin.AddWithViewPort(matchbox)
 	toolbar.PackStart(selectButton, true, true, 0)
-	otherbox.PackStart(resultEntry, true, true, 0)
-	otherbox.PackStart(swin, false, false, 0)
+	otherbox.PackStart(resultEntry, false, false, 0)
+	otherbox.PackStart(swin, true, true, 0)
 
 	sig := resultEntry.Connect("changed", func() {
 		fmt.Println(resultEntry.GetText())
