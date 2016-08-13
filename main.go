@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/GeertJohan/go.tesseract"
+
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
@@ -44,7 +46,7 @@ func cbModifyEntry(e *gtk.Entry, i int, cbt *gtk.ComboBoxText) func() {
 	}
 }
 
-func cbSelectArea(w *gtk.Window, butt *gtk.Button, box *gtk.Box, entry *gtk.Entry, tempDir string) func() {
+func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.Box, entry *gtk.Entry, tempDir string) func() {
 	return func() {
 		var matches [][]rune
 
@@ -64,7 +66,7 @@ func cbSelectArea(w *gtk.Window, butt *gtk.Button, box *gtk.Box, entry *gtk.Entr
 		label.Show()
 
 		go func() {
-			matches, err = detectCharacters(imgPath)
+			matches, err = detectCharacters(t, imgPath)
 			gdk.ThreadsEnter()
 			label.SetText("")
 			butt.SetSensitive(true)
@@ -93,6 +95,11 @@ func cbSelectArea(w *gtk.Window, butt *gtk.Button, box *gtk.Box, entry *gtk.Entr
 }
 
 func MainWindow() {
+	t, err := tesseract.NewTess("", "jpn")
+	if err != nil {
+		MsgBoxError(nil, err.Error())
+	}
+
 	selectButton := gtk.NewButtonWithLabel("セレクト")
 	resultEntry := gtk.NewEntry()
 
@@ -127,6 +134,7 @@ func MainWindow() {
 
 	w.Add(mainbox)
 	w.Connect("destroy", func() {
+		t.Close()
 		cleanup(tempDir)
 		gtk.MainQuit()
 	})

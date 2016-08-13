@@ -6,13 +6,7 @@ import (
 	"github.com/GeertJohan/go.tesseract"
 )
 
-func detectCharacters(path string) ([][]rune, error) {
-	t, err := tesseract.NewTess("", "jpn")
-	if err != nil {
-		return [][]rune{}, err
-	}
-	defer t.Close()
-
+func detectCharacters(t *tesseract.Tess, path string) ([][]rune, error) {
 	p, err := leptonica.NewPixFromFile(path)
 	if err != nil {
 		return [][]rune{}, err
@@ -67,5 +61,6 @@ func detectCharacters(path string) ([][]rune, error) {
 		}
 	}
 
+	t.Clear()
 	return matches, nil
 }
