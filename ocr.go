@@ -11,11 +11,13 @@ func detectCharacters(path string) ([][]rune, error) {
 	if err != nil {
 		return [][]rune{}, err
 	}
+	defer t.Close()
 
 	p, err := leptonica.NewPixFromFile(path)
 	if err != nil {
 		return [][]rune{}, err
 	}
+	defer p.Close()
 
 	w, h, _, err := p.GetDimensions()
 	if err != nil {
