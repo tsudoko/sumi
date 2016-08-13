@@ -46,7 +46,7 @@ func cbModifyEntry(e *gtk.Entry, i int, cbt *gtk.ComboBoxText) func() {
 	}
 }
 
-func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.Box, entry *gtk.Entry, tempDir string) func() {
+func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.Box, entry *gtk.Entry, eSig int, tempDir string) func() {
 	return func() {
 		var matches [][]rune
 
@@ -81,11 +81,16 @@ func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.B
 			DestroyAllChildren(&box.Container)
 
 			entry.SetText("")
+			entry.HandlerBlock(eSig)
+
 			for i, e := range boxes {
 				box.PackStart(e, true, true, 0)
 				e.Connect("changed", cbModifyEntry(entry, i, e))
 				e.Emit("changed")
 			}
+
+			entry.HandlerUnblock(eSig)
+			entry.Emit("changed")
 
 			box.ShowAll()
 			gdk.Flush()
@@ -124,10 +129,10 @@ func MainWindow() {
 	otherbox.PackStart(resultEntry, true, true, 0)
 	otherbox.PackStart(swin, false, false, 0)
 
-	selectButton.Connect("clicked", cbSelectArea(w, selectButton, &matchbox.Box, resultEntry, tempDir))
-	resultEntry.Connect("changed", func() {
+	sig := resultEntry.Connect("changed", func() {
 		fmt.Println(resultEntry.GetText())
 	})
+	selectButton.Connect("clicked", cbSelectArea(w, t, selectButton, &matchbox.Box, resultEntry, sig, tempDir))
 
 	mainbox.PackStart(toolbar, false, false, 0)
 	mainbox.PackStart(otherbox, true, true, 0)
