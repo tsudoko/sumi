@@ -98,8 +98,11 @@ func MainWindow() {
 
 	mainbox := gtk.NewHBox(false, 0)
 	matchbox := gtk.NewHBox(false, 0)
-	otherbox := gtk.NewVBox(true, 0)
+	otherbox := gtk.NewVBox(false, 0)
 	toolbar := gtk.NewVBox(true, 0)
+
+	swin := gtk.NewScrolledWindow(nil, nil)
+	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_NEVER)
 
 	w := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
 	w.SetTitle("すみ")
@@ -109,10 +112,11 @@ func MainWindow() {
 		MsgBoxError(w, err.Error())
 	}
 
+	swin.AddWithViewPort(matchbox)
 	toolbar.PackStart(selectButton, true, true, 0)
 	otherbox.PackStart(resultEntry, true, true, 0)
-	otherbox.PackStart(matchbox, false, false, 0)
-	// do we really need dynamic box generation? most words are less than 3 chars long
+	otherbox.PackStart(swin, false, false, 0)
+
 	selectButton.Connect("clicked", cbSelectArea(w, selectButton, &matchbox.Box, resultEntry, tempDir))
 	resultEntry.Connect("changed", func() {
 		fmt.Println(resultEntry.GetText())
