@@ -33,6 +33,8 @@ func TakeScreenshot(path, cmdName string) (string, error) {
 		cmd = exec.Command("maim", "-ns", "-t0", "-b2", "-c0.5,0.4,0.9,0.75", path)
 	} else if BinExists("scrot") {
 		cmd = exec.Command("scrot", "-s", path)
+	} else if BinExists("screencapture") {
+        cmd = exec.Command("screencapture", "-sxr", path)
 	} else if BinExists("boxcutter") {
 		cmd = exec.Command("boxcutter", path)
 	} else {
