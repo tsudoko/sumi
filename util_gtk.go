@@ -13,9 +13,10 @@ func MsgBoxError(w *gtk.Window, msg string) {
 }
 
 func DestroyAllChildren(c *gtk.Container) {
-	c.GetChildren().ForEach(func(p unsafe.Pointer, _ interface{}) {
+	children := c.GetChildren()
+	children.ForEach(func(p unsafe.Pointer, _ interface{}) {
 		child := gtk.WidgetFromNative(p)
 		child.Destroy()
 	})
-	c.GetChildren().Free()
+	children.Free()
 }
