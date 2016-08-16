@@ -99,10 +99,11 @@ func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.B
 	}
 }
 
-func MainWindow() {
+func MainWindow() error {
 	t, err := tesseract.NewTess("", "jpn")
 	if err != nil {
 		MsgBoxError(nil, err.Error())
+		return err
 	}
 
 	selectButton := gtk.NewButtonWithLabel("セレクト")
@@ -145,6 +146,7 @@ func MainWindow() {
 	})
 
 	w.ShowAll()
+	return nil
 }
 
 func main() {
@@ -152,7 +154,9 @@ func main() {
 	gdk.ThreadsInit()
 	gtk.Init(nil)
 	gdk.ThreadsEnter()
-	MainWindow()
-	gtk.Main()
+	err := MainWindow()
+	if err == nil {
+		gtk.Main()
+	}
 	gdk.ThreadsLeave()
 }
