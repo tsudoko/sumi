@@ -51,7 +51,7 @@ func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.B
 		var matches [][]rune
 
 		butt.SetSensitive(false)
-		imgPath, err := TakeScreenshot(tempDir+string(os.PathSeparator)+"sumi", "")
+		imgPath, err := TakeScreenshot(tempDir+string(os.PathSeparator)+"sumi", os.Getenv("SUMI_SCREENCAPTURE"))
 
 		if err != nil {
 			MsgBoxError(w, err.Error())
