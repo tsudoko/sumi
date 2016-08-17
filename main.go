@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/GeertJohan/go.tesseract"
 
@@ -11,6 +13,15 @@ import (
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
 )
+
+func handleSignals(c chan os.Signal, w *gtk.Window) {
+	select {
+	case <-c:
+		gdk.ThreadsEnter()
+		w.Emit("destroy")
+		gdk.ThreadsLeave()
+	}
+}
 
 func generateBoxes(matches [][]rune) []*gtk.ComboBoxText {
 	boxes := make([]*gtk.ComboBoxText, 0, 3)
@@ -25,8 +36,12 @@ func generateBoxes(matches [][]rune) []*gtk.ComboBoxText {
 	return boxes
 }
 
-func cleanup(path string) {
-	os.RemoveAll(path)
+func cbTerminate(t *tesseract.Tess, path string) func() {
+	return func() {
+		t.Close()
+		os.RemoveAll(path)
+		gtk.MainQuit()
+	}
 }
 
 func cbModifyEntry(e *gtk.Entry, i int, cbt *gtk.ComboBoxText) func() {
@@ -106,6 +121,9 @@ func MainWindow() error {
 		return err
 	}
 
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
 	selectButton := gtk.NewButtonWithLabel("セレクト")
 	resultEntry := gtk.NewEntry()
 
@@ -139,13 +157,10 @@ func MainWindow() error {
 	mainbox.PackStart(otherbox, true, true, 0)
 
 	w.Add(mainbox)
-	w.Connect("destroy", func() {
-		t.Close()
-		cleanup(tempDir)
-		gtk.MainQuit()
-	})
+	w.Connect("destroy", cbTerminate(t, tempDir))
 
 	w.ShowAll()
+	go handleSignals(c, w)
 	return nil
 }
 
