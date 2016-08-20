@@ -221,7 +221,7 @@ func MainWindow() string {
 }
 
 func main() {
-	gtk.Init(nil)
+	gtk.Init(&os.Args)
 	errs := MainWindow()
 	if errs != "" {
 		MsgBoxError(nil, errs)
