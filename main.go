@@ -165,11 +165,6 @@ func MainWindow() string {
 		return "error creating the otherbox: " + err.Error()
 	}
 
-	toolbar, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
-	if err != nil {
-		return "error creating the toolbar: " + err.Error()
-	}
-
 	swin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
 		return "error creating the scrolled window: " + err.Error()
@@ -187,7 +182,6 @@ func MainWindow() string {
 
 	w.SetTitle("すみ")
 	matchbox.SetHomogeneous(true)
-	toolbar.SetHomogeneous(true)
 	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_NEVER)
 
 	sig, err := resultEntry.Connect("changed", func() {
@@ -213,10 +207,9 @@ func MainWindow() string {
 	}
 
 	swin.Add(matchbox)
-	toolbar.PackStart(selectButton, true, true, 0)
 	otherbox.PackStart(resultEntry, false, false, 0)
 	otherbox.PackStart(swin, true, true, 0)
-	mainbox.PackStart(toolbar, false, false, 0)
+	mainbox.PackStart(selectButton, false, false, 0)
 	mainbox.PackStart(otherbox, true, true, 0)
 	w.Add(mainbox)
 
