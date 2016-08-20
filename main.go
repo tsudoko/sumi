@@ -160,8 +160,6 @@ func MainWindow() string {
 		return "error creating the matchbox: " + err.Error()
 	}
 
-	matchbox.SetHomogeneous(true)
-
 	otherbox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	if err != nil {
 		return "error creating the otherbox: " + err.Error()
@@ -172,30 +170,25 @@ func MainWindow() string {
 		return "error creating the toolbar: " + err.Error()
 	}
 
-	toolbar.SetHomogeneous(true)
-
 	swin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
 		return "error creating the scrolled window: " + err.Error()
 	}
 
-	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_NEVER)
-
 	w, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	if err != nil {
 		return "error creating the window: " + err.Error()
 	}
-	w.SetTitle("すみ")
 
 	tempDir, err := ioutil.TempDir("", "sumi")
 	if err != nil {
 		return "error creating the temporary directory: " + err.Error()
 	}
 
-	swin.Add(matchbox)
-	toolbar.PackStart(selectButton, true, true, 0)
-	otherbox.PackStart(resultEntry, false, false, 0)
-	otherbox.PackStart(swin, true, true, 0)
+	w.SetTitle("すみ")
+	matchbox.SetHomogeneous(true)
+	toolbar.SetHomogeneous(true)
+	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_NEVER)
 
 	sig, err := resultEntry.Connect("changed", func() {
 		text, err := resultEntry.GetText()
@@ -214,14 +207,18 @@ func MainWindow() string {
 		return "error connecting the `clicked' signal to the select button: " + err.Error()
 	}
 
-	mainbox.PackStart(toolbar, false, false, 0)
-	mainbox.PackStart(otherbox, true, true, 0)
-
-	w.Add(mainbox)
 	_, err = w.Connect("destroy", cbTerminate(t, tempDir))
 	if err != nil {
 		return "error connecting the `destroy' signal to the window: " + err.Error()
 	}
+
+	swin.Add(matchbox)
+	toolbar.PackStart(selectButton, true, true, 0)
+	otherbox.PackStart(resultEntry, false, false, 0)
+	otherbox.PackStart(swin, true, true, 0)
+	mainbox.PackStart(toolbar, false, false, 0)
+	mainbox.PackStart(otherbox, true, true, 0)
+	w.Add(mainbox)
 
 	w.ShowAll()
 	go handleSignals(c, w)
