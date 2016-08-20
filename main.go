@@ -182,6 +182,7 @@ func MainWindow() string {
 
 	w.SetTitle("すみ")
 	matchbox.SetHomogeneous(true)
+	swin.SetOverlayScrolling(false)
 	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_NEVER)
 
 	sig, err := resultEntry.Connect("changed", func() {
