@@ -9,24 +9,27 @@ import (
 
 	"github.com/GeertJohan/go.tesseract"
 
-	"github.com/mattn/go-gtk/gdk"
-	"github.com/mattn/go-gtk/glib"
-	"github.com/mattn/go-gtk/gtk"
+	"github.com/gotk3/gotk3/glib"
+	"github.com/gotk3/gotk3/gtk"
 )
 
 func handleSignals(c chan os.Signal, w *gtk.Window) {
 	select {
 	case <-c:
-		gdk.ThreadsEnter()
-		w.Emit("destroy")
-		gdk.ThreadsLeave()
+		glib.IdleAdd(func() {
+			w.Emit("destroy")
+		})
 	}
 }
 
 func generateBoxes(matches [][]rune) []*gtk.ComboBoxText {
 	boxes := make([]*gtk.ComboBoxText, 0, 3)
-	for _, b := range matches {
-		cb := gtk.NewComboBoxText()
+	for i, b := range matches {
+		cb, err := gtk.ComboBoxTextNew()
+		if err != nil {
+			MsgBoxError(nil, fmt.Sprintf("error generating the box %d: %s", i, err.Error()))
+		}
+
 		for _, m := range b {
 			cb.AppendText(string(m))
 		}
@@ -46,8 +49,13 @@ func cbTerminate(t *tesseract.Tess, path string) func() {
 
 func cbModifyEntry(e *gtk.Entry, i int, cbt *gtk.ComboBoxText) func() {
 	return func() {
-		old := e.GetText()
+		old, err := e.GetText()
 		runes := []rune(old)
+
+		if err != nil {
+			MsgBoxError(nil, "error getting text from the entry: "+err.Error())
+			return
+		}
 
 		for j := len(runes); i >= len(runes); j++ {
 			runes = append(runes, '　')
@@ -61,7 +69,7 @@ func cbModifyEntry(e *gtk.Entry, i int, cbt *gtk.ComboBoxText) func() {
 	}
 }
 
-func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.Box, entry *gtk.Entry, eSig int, tempDir string) func() {
+func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.Box, entry *gtk.Entry, eSig glib.SignalHandle, tempDir string) func() {
 	return func() {
 		var matches [][]rune
 
@@ -69,109 +77,163 @@ func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.B
 		imgPath, err := TakeScreenshot(tempDir+string(os.PathSeparator)+"sumi", os.Getenv("SUMI_SCREENCAPTURE"))
 
 		if err != nil {
-			MsgBoxError(w, err.Error())
+			MsgBoxError(w, "error taking screenshot: "+err.Error())
 			butt.SetSensitive(true)
 			return
 		}
 
 		DestroyAllChildren(&box.Container)
 
-		label := gtk.NewLabel("Detecting...")
+		label, err := gtk.LabelNew("Detecting...")
+		if err != nil {
+			MsgBoxError(w, "error creating the label: "+err.Error())
+			butt.SetSensitive(true)
+			return
+		}
+
 		box.Add(label)
 		label.Show()
 
 		go func() {
 			matches, err = detectCharacters(t, imgPath)
-			gdk.ThreadsEnter()
-			label.SetText("")
-			butt.SetSensitive(true)
+			glib.IdleAdd(func() {
+				label.SetText("")
+				butt.SetSensitive(true)
 
-			if err != nil {
-				MsgBoxError(w, err.Error())
-				return
-			}
+				if err != nil {
+					MsgBoxError(w, "error detecting characters: "+err.Error())
+					return
+				}
 
-			boxes := generateBoxes(matches)
+				boxes := generateBoxes(matches)
 
-			DestroyAllChildren(&box.Container)
+				DestroyAllChildren(&box.Container)
 
-			entry.SetText("")
-			entry.HandlerBlock(eSig)
+				entry.SetText("")
+				entry.HandlerBlock(eSig)
 
-			for i, e := range boxes {
-				box.PackStart(e, true, true, 0)
-				e.Connect("changed", cbModifyEntry(entry, i, e))
-				e.Emit("changed")
-			}
+				for i, e := range boxes {
+					box.PackStart(e, true, true, 0)
+					_, err = e.Connect("changed", cbModifyEntry(entry, i, e))
+					if err != nil {
+						MsgBoxError(w, fmt.Sprintf("error connecting the `changed' signal to box %d: %s", i, err.Error()))
+					}
 
-			entry.HandlerUnblock(eSig)
-			entry.Emit("changed")
+					e.Emit("changed")
+				}
 
-			box.ShowAll()
-			gdk.Flush()
-			gdk.ThreadsLeave()
+				entry.HandlerUnblock(eSig)
+				entry.Emit("changed")
+
+				box.ShowAll()
+			})
 		}()
 	}
 }
 
-func MainWindow() error {
+func MainWindow() string {
 	t, err := tesseract.NewTess("", "jpn")
 	if err != nil {
-		MsgBoxError(nil, err.Error())
-		return err
+		return "error initializing tesseract: " + err.Error()
 	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	selectButton := gtk.NewButtonWithLabel("セレクト")
-	resultEntry := gtk.NewEntry()
+	selectButton, err := gtk.ButtonNewWithLabel("セレクト")
+	if err != nil {
+		return "error creating the select button: " + err.Error()
+	}
 
-	mainbox := gtk.NewHBox(false, 0)
-	matchbox := gtk.NewHBox(false, 0)
-	otherbox := gtk.NewVBox(false, 0)
-	toolbar := gtk.NewVBox(true, 0)
+	resultEntry, err := gtk.EntryNew()
+	if err != nil {
+		return "error creating the entry: " + err.Error()
+	}
 
-	swin := gtk.NewScrolledWindow(nil, nil)
+	mainbox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+	if err != nil {
+		return "error creating the mainbox: " + err.Error()
+	}
+
+	matchbox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+	if err != nil {
+		return "error creating the matchbox: " + err.Error()
+	}
+
+	matchbox.SetHomogeneous(true)
+
+	otherbox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
+	if err != nil {
+		return "error creating the otherbox: " + err.Error()
+	}
+
+	toolbar, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
+	if err != nil {
+		return "error creating the toolbar: " + err.Error()
+	}
+
+	toolbar.SetHomogeneous(true)
+
+	swin, err := gtk.ScrolledWindowNew(nil, nil)
+	if err != nil {
+		return "error creating the scrolled window: " + err.Error()
+	}
+
 	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_NEVER)
 
-	w := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	w, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	if err != nil {
+		return "error creating the window: " + err.Error()
+	}
 	w.SetTitle("すみ")
 
 	tempDir, err := ioutil.TempDir("", "sumi")
 	if err != nil {
-		MsgBoxError(w, err.Error())
+		return "error creating the temporary directory: " + err.Error()
 	}
 
-	swin.AddWithViewPort(matchbox)
+	swin.Add(matchbox)
 	toolbar.PackStart(selectButton, true, true, 0)
 	otherbox.PackStart(resultEntry, false, false, 0)
 	otherbox.PackStart(swin, true, true, 0)
 
-	sig := resultEntry.Connect("changed", func() {
-		fmt.Println(resultEntry.GetText())
+	sig, err := resultEntry.Connect("changed", func() {
+		text, err := resultEntry.GetText()
+		if err != nil {
+			MsgBoxError(nil, "error getting text from the entry: "+err.Error())
+			return
+		}
+		fmt.Println(text)
 	})
-	selectButton.Connect("clicked", cbSelectArea(w, t, selectButton, &matchbox.Box, resultEntry, sig, tempDir))
+	if err != nil {
+		return "error connecting the `changed' signal to the entry: " + err.Error()
+	}
+
+	_, err = selectButton.Connect("clicked", cbSelectArea(w, t, selectButton, matchbox, resultEntry, sig, tempDir))
+	if err != nil {
+		return "error connecting the `clicked' signal to the select button: " + err.Error()
+	}
 
 	mainbox.PackStart(toolbar, false, false, 0)
 	mainbox.PackStart(otherbox, true, true, 0)
 
 	w.Add(mainbox)
-	w.Connect("destroy", cbTerminate(t, tempDir))
+	_, err = w.Connect("destroy", cbTerminate(t, tempDir))
+	if err != nil {
+		return "error connecting the `destroy' signal to the window: " + err.Error()
+	}
 
 	w.ShowAll()
 	go handleSignals(c, w)
-	return nil
+
+	return ""
 }
 
 func main() {
-	glib.ThreadInit()
-	gdk.ThreadsInit()
 	gtk.Init(nil)
-	gdk.ThreadsEnter()
-	err := MainWindow()
-	if err == nil {
-		gtk.Main()
+	errs := MainWindow()
+	if errs != "" {
+		MsgBoxError(nil, errs)
 	}
-	gdk.ThreadsLeave()
+	gtk.Main()
 }
