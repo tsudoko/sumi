@@ -160,9 +160,9 @@ func MainWindow() string {
 		return "error creating the matchbox: " + err.Error()
 	}
 
-	otherbox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
+	ocrbox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	if err != nil {
-		return "error creating the otherbox: " + err.Error()
+		return "error creating the ocrbox: " + err.Error()
 	}
 
 	swin, err := gtk.ScrolledWindowNew(nil, nil)
@@ -207,10 +207,10 @@ func MainWindow() string {
 	}
 
 	swin.Add(matchbox)
-	otherbox.PackStart(resultEntry, false, false, 0)
-	otherbox.PackStart(swin, true, true, 0)
+	ocrbox.PackStart(resultEntry, false, false, 0)
+	ocrbox.PackStart(swin, true, true, 0)
 	mainbox.PackStart(selectButton, false, false, 0)
-	mainbox.PackStart(otherbox, true, true, 0)
+	mainbox.PackStart(ocrbox, true, true, 0)
 	w.Add(mainbox)
 
 	w.ShowAll()
