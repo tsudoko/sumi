@@ -131,53 +131,40 @@ func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.B
 	}
 }
 
-func MainWindow() string {
-	t, err := tesseract.NewTess("", "jpn")
-	if err != nil {
-		return "error initializing tesseract: " + err.Error()
-	}
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
+func MainWindow(t *tesseract.Tess, tempDir string) (*gtk.Window, string) {
 	selectButton, err := gtk.ButtonNewWithLabel("セレクト")
 	if err != nil {
-		return "error creating the select button: " + err.Error()
+		return nil, "error creating the select button: " + err.Error()
 	}
 
 	resultEntry, err := gtk.EntryNew()
 	if err != nil {
-		return "error creating the entry: " + err.Error()
+		return nil, "error creating the entry: " + err.Error()
 	}
 
 	mainbox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
 	if err != nil {
-		return "error creating the mainbox: " + err.Error()
+		return nil, "error creating the mainbox: " + err.Error()
 	}
 
 	matchbox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
 	if err != nil {
-		return "error creating the matchbox: " + err.Error()
+		return nil, "error creating the matchbox: " + err.Error()
 	}
 
 	ocrbox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	if err != nil {
-		return "error creating the ocrbox: " + err.Error()
+		return nil, "error creating the ocrbox: " + err.Error()
 	}
 
 	swin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
-		return "error creating the scrolled window: " + err.Error()
+		return nil, "error creating the scrolled window: " + err.Error()
 	}
 
 	w, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	if err != nil {
-		return "error creating the window: " + err.Error()
-	}
-
-	tempDir, err := ioutil.TempDir("", "sumi")
-	if err != nil {
-		return "error creating the temporary directory: " + err.Error()
+		return nil, "error creating the window: " + err.Error()
 	}
 
 	w.SetTitle("すみ")
@@ -194,17 +181,17 @@ func MainWindow() string {
 		fmt.Println(text)
 	})
 	if err != nil {
-		return "error connecting the `changed' signal to the entry: " + err.Error()
+		return w, "error connecting the `changed' signal to the entry: " + err.Error()
 	}
 
 	_, err = selectButton.Connect("clicked", cbSelectArea(w, t, selectButton, matchbox, resultEntry, sig, tempDir))
 	if err != nil {
-		return "error connecting the `clicked' signal to the select button: " + err.Error()
+		return w, "error connecting the `clicked' signal to the select button: " + err.Error()
 	}
 
 	_, err = w.Connect("destroy", cbTerminate(t, tempDir))
 	if err != nil {
-		return "error connecting the `destroy' signal to the window: " + err.Error()
+		return w, "error connecting the `destroy' signal to the window: " + err.Error()
 	}
 
 	swin.Add(matchbox)
@@ -215,16 +202,34 @@ func MainWindow() string {
 	w.Add(mainbox)
 
 	w.ShowAll()
-	go handleSignals(c, w)
 
-	return ""
+	return w, ""
 }
 
 func main() {
 	gtk.Init(&os.Args)
-	errs := MainWindow()
+
+	t, err := tesseract.NewTess("", "jpn")
+	if err != nil {
+		MsgBoxError(nil, "error initializing tesseract: "+err.Error())
+		return
+	}
+
+	tempDir, err := ioutil.TempDir("", "sumi")
+	if err != nil {
+		MsgBoxError(nil, "error creating the temporary directory: "+err.Error())
+		return
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	w, errs := MainWindow(t, tempDir)
 	if errs != "" {
 		MsgBoxError(nil, errs)
+		return
 	}
+
+	go handleSignals(c, w)
 	gtk.Main()
 }
