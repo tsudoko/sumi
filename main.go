@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
+
+var lang = flag.String("l", "jpn", "language(s) used for OCR")
 
 func handleSignals(c chan os.Signal, w *gtk.Window) {
 	select {
@@ -209,8 +212,9 @@ func MainWindow(t *tesseract.Tess, tempDir string) (*gtk.Window, error) {
 
 func main() {
 	gtk.Init(&os.Args)
+	flag.Parse()
 
-	t, err := tesseract.NewTess("", "jpn")
+	t, err := tesseract.NewTess("", *lang)
 	if err != nil {
 		MsgBoxError(nil, "error initializing tesseract: "+err.Error())
 		return
