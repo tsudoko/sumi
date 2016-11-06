@@ -3,7 +3,7 @@ package main
 import (
 	"gopkg.in/GeertJohan/go.leptonica.v1"
 	//"gopkg.in/GeertJohan/go.tesseract.v1"
-	"github.com/GeertJohan/go.tesseract"
+	"github.com/tsudoko/go.tesseract"
 )
 
 func detectCharacters(t *tesseract.Tess, path string) ([][]rune, error) {
