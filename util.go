@@ -30,7 +30,7 @@ func TakeScreenshot(path, cmdName string) (string, error) {
 		}
 		cmd = exec.Command(args[0], args[1:]...)
 	} else if BinExists("maim") && BinExists("slop") {
-		cmd = exec.Command("maim", "-ns", "-t0", "-b2", "-c0.5,0.4,0.9,0.75", path)
+		cmd = exec.Command("maim", "-n", "-s", "-t", "0", "-c", "0.5,0.4,0.9,0.75", path)
 	} else if BinExists("scrot") {
 		cmd = exec.Command("scrot", "-s", path)
 	} else if BinExists("boxcutter") {
