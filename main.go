@@ -13,6 +13,8 @@ import (
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
+
+	"github.com/tsudoko/sumi/ocr"
 )
 
 var lang = flag.String("l", "jpn", "language(s) used for OCR")
@@ -99,7 +101,7 @@ func cbSelectArea(w *gtk.Window, t *tesseract.Tess, butt *gtk.Button, box *gtk.B
 		label.Show()
 
 		go func() {
-			matches, err = detectCharacters(t, imgPath)
+			matches, err = ocr.Detect(t, imgPath)
 			glib.IdleAdd(func() {
 				label.SetText("")
 				butt.SetSensitive(true)

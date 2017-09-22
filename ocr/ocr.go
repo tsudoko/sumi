@@ -1,4 +1,4 @@
-package main
+package ocr
 
 import (
 	"gopkg.in/GeertJohan/go.leptonica.v1"
@@ -6,7 +6,7 @@ import (
 	"github.com/tsudoko/go.tesseract"
 )
 
-func detectCharacters(t *tesseract.Tess, path string) ([][]rune, error) {
+func Detect(t *tesseract.Tess, path string) ([][]rune, error) {
 	p, err := leptonica.NewPixFromFile(path)
 	if err != nil {
 		return [][]rune{}, err
